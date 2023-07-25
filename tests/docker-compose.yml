@@ -1,0 +1,36 @@
+services:
+  tests:
+    build: ../backend
+    volumes:
+      - ./:/opt/auth/tests/
+    entrypoint: 
+      sh -c "cd tests/ &&
+             pip install pytest &&
+             pytest"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:14.5-alpine
+    ports:
+      - 5432:5432
+    env_file:
+      - ./.env
+    healthcheck:
+      test: pg_isready -h postgres -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 100
+
+  redis:
+    image: redis:7.0.5
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      timeout: 5s
+      retries: 100
